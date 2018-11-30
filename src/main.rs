@@ -32,7 +32,26 @@ fn encrypt(input: u32) -> u32{
     return result;
 }
 
+fn get_parity(input: u8) -> u8{
+    let mut result: u8 = 0x0;
+    for _i in 0..8{
+        result = result ^ (input >> _i) & 0x1; 
+    }
+    return result;
+}
+
+fn get_ones(input: u8) -> u8{
+    let mut result: u8 = 0;
+    for _i in 0..8{
+        if ((input >> _i) & 0x1) == 1 {
+            result = result + 1;
+        }
+    }
+    return result;
+}
+
 fn main() {
+    /*
     let start = Instant::now();
     let mut temp: u32 = 0x6964;
     let mut counter: u64 = 0;
@@ -41,5 +60,10 @@ fn main() {
         counter = counter+1;
     }
     println!("milis: {}", start.elapsed().as_secs());
-    println!("count: {}", counter/10);
+    println!("count: {}", counter/10);*/
+    let mut temp: u8 = 0x12;
+    println!("parity: {}", get_parity(temp));
+    println!("ones: {}", get_ones(temp));
 }
+
+
