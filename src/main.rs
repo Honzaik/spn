@@ -50,6 +50,61 @@ fn get_ones(input: u8) -> u8{
     return result;
 }
 
+fn f1(u: u8, input: u8) -> u8{
+    let mut result: u8 = 0;
+    let sbox: [u8; 16] = [0x8, 0xf, 0x3, 0x0, 0xa, 0x5, 0x9, 0x6, 0xc, 0x1, 0xe, 0x2, 0x7, 0x4, 0xd, 0xb];
+    let sboxed_input: u8 = sbox[input as usize];
+    for i in 0..8{
+        result = result + (((u >> i) & 1) & ((sboxed_input >> i) & 1));  
+    }
+    return result;
+}
+
+fn znam_f1(u: u8, input: u8) -> i8{
+    if f1(u,input) % 2 == 0 {
+        return 1;
+    } else{
+        return -1
+    }
+}
+
+fn f2(v: u8, input: u8) -> u8{
+    let mut result: u8 = 0;
+    for i in 0..8{
+        result = result + (((v >> i) & 1) & ((input >> i) & 1));  
+    }
+    return result;
+}
+
+fn znam_f2(u: u8, input: u8) -> i8{
+    if f2(u,input) % 2 == 0 {
+        return 1;
+    } else{
+        return -1
+    }
+}
+
+fn dot_product_functions(u: u8, v: u8) -> f32{
+    let mut result: f32 = 0.0;
+    for i in 0..16{
+        result = result + ((znam_f1(u, i) * znam_f2(v, i)) as f32);
+    }
+    return result;
+}
+
+fn corr(u: u8, v: u8) -> f32{
+    return dot_product_functions(u, v)/16.0
+}
+
+fn print_matrix(m:  [[f32; 16]; 16]){
+    for _i in 0..16{
+        for _j in 0..16{
+            print!("{:5} ", m[_i][_j]);
+        }
+        println!();
+    }
+}
+
 fn main() {
     /*
     let start = Instant::now();
@@ -61,9 +116,13 @@ fn main() {
     }
     println!("milis: {}", start.elapsed().as_secs());
     println!("count: {}", counter/10);*/
-    let mut temp: u8 = 0x12;
-    println!("parity: {}", get_parity(temp));
-    println!("ones: {}", get_ones(temp));
+    let mut corr_matrix: [[f32; 16]; 16] = [[0.0; 16]; 16];
+    for u  in 0..16{
+        for v in 0..16{
+            corr_matrix[u][v] = corr(u as u8,v as u8);
+        } 
+    }
+    print_matrix(corr_matrix);
 }
 
 
