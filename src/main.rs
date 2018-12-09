@@ -1,5 +1,7 @@
-//extern crate rand;
-use std::time::Instant;
+#![allow(non_snake_case)]
+use std::fs::File;
+use std::io::{BufRead, BufReader, Result};
+use std::collections::HashMap;
 fn add_key(input: &mut u32, key: u32){
     *input = *input ^ key;
 }
@@ -105,7 +107,39 @@ fn print_matrix(m:  [[f32; 16]; 16]){
     }
 }
 
-fn main() {
+fn parity(u: u32, input: u32) -> u8{
+    let mut result: u8 = 0;
+    for i in 0..16{
+        result = result + (((u >> i) & 1) & ((input >> i) & 1)) as u8;  
+    }
+    return result;
+}
+
+fn sub_bytes_inv(input: &mut u32){
+    let sbox: [u32; 16] = [0x3, 0x9, 0xb, 0x2, 0xd, 0x5, 0x7, 0xc, 0x0, 0x6, 0x4, 0xf, 0x8, 0xe, 0xa, 0x1];
+    *input = (sbox[((*input & 0xf000) >> 12) as usize] << 12) ^ (sbox[((*input & 0x0f00) >> 8) as usize] << 8) ^ (sbox[((*input & 0x00f0) >> 4) as usize] << 4) ^ (sbox[(*input & 0x000f) as usize]);
+}
+
+
+fn get_key_corr(key: u32, samples: &HashMap<u32,u32>) -> f32{
+    let u0: u32 = 0x0070;
+    let uN: u32 = 0x8080;
+    let mut number_of_matches: u32 = 0;
+    let tau: f32 = 10000.0;
+    for (input, output) in samples{
+        let mut processed_output: u32 = *output ^ key;
+        sub_bytes_inv(&mut processed_output);
+        let output_parity: u8 = parity(uN, processed_output);
+        let input_parity: u8 = parity(u0, *input);
+        if input_parity == output_parity {
+            number_of_matches = number_of_matches + 1;
+        }
+    }
+    let corr: f32 = (2.0*(number_of_matches as f32))/tau - 1.0;
+    return corr
+}
+
+fn main() -> Result<()>{
     /*
     let start = Instant::now();
     let mut temp: u32 = 0x6964;
@@ -115,14 +149,33 @@ fn main() {
         counter = counter+1;
     }
     println!("milis: {}", start.elapsed().as_secs());
-    println!("count: {}", counter/10);*/
+    println!("count: {}", counter/10);
     let mut corr_matrix: [[f32; 16]; 16] = [[0.0; 16]; 16];
     for u  in 0..16{
         for v in 0..16{
             corr_matrix[u][v] = corr(u as u8,v as u8);
         } 
     }
-    print_matrix(corr_matrix);
+    print_matrix(corr_matrix);*/
+    let mut samples: HashMap<u32,u32> = HashMap::new();
+    let file = File::open("C:\\Users\\Honzaik\\spn\\src\\data.csv").unwrap();
+    for line in BufReader::new(file).lines() {
+        let cur = line.unwrap();
+        let mut split = cur.split(",");
+        let vec: Vec<&str> = split.collect();
+        let input = u32::from_str_radix(vec[0], 16).unwrap();
+        let output = u32::from_str_radix(vec[1], 16).unwrap();
+        samples.insert(input,output);
+    }
+
+    for k1 in 0..16 {
+        for k2 in 0..16 {
+            let testKey: u32 = (k2 as u32)*16 + (k1 as u32)*16*16*16;
+            let korelace: f32 = get_key_corr(testKey, &samples);
+            println!("{}", korelace.abs());
+        }
+    }
+    Ok(())
 }
 
 
