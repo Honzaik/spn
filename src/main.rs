@@ -110,7 +110,7 @@ fn print_matrix(m:  [[f32; 16]; 16]){
 fn parity(u: u32, input: u32) -> u8{
     let mut result: u8 = 0;
     for i in 0..16{
-        result = result + (((u >> i) & 1) & ((input >> i) & 1)) as u8;  
+        result = result ^ (((u >> i) & 1) & ((input >> i) & 1)) as u8;  
     }
     return result;
 }
@@ -122,8 +122,10 @@ fn sub_bytes_inv(input: &mut u32){
 
 
 fn get_key_corr(key: u32, samples: &HashMap<u32,u32>) -> f32{
-    let u0: u32 = 0x0070;
-    let uN: u32 = 0x8080;
+    //let u0: u32 = 0x0070;
+    //let uN: u32 = 0x8080;
+    let u0: u32 = 0x0700;
+    let uN: u32 = 0x0900;
     let mut number_of_matches: u32 = 0;
     let tau: f32 = 10000.0;
     for (input, output) in samples{
@@ -167,13 +169,20 @@ fn main() -> Result<()>{
         let output = u32::from_str_radix(vec[1], 16).unwrap();
         samples.insert(input,output);
     }
-
+/*
     for k1 in 0..16 {
         for k2 in 0..16 {
             let testKey: u32 = (k2 as u32)*16 + (k1 as u32)*16*16*16;
             let korelace: f32 = get_key_corr(testKey, &samples);
             println!("{}", korelace.abs());
         }
+    }
+*/
+
+    for k1 in 0..16 {
+        let testKey: u32 = (k1 as u32)*16*16;
+        let korelace: f32 = get_key_corr(testKey, &samples);
+        println!("{}, {:#x}", korelace.abs(), testKey);
     }
     Ok(())
 }
