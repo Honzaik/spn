@@ -141,6 +141,23 @@ fn get_key_corr(key: u32, samples: &HashMap<u32,u32>) -> f32{
     return corr
 }
 
+fn getDp(u: u8, v: u8) -> f32{
+    let mut number_of_matches: u32 = 0;
+
+    for w in 0..16{
+        let mut input1: u32 = w;
+        let mut input2: u32 = w ^ (v as u32);
+        sub_bytes(&mut input1);
+        sub_bytes(&mut input2);
+        if input1 ^ input2 == (u as u32) {
+            number_of_matches = number_of_matches + 1;
+        }
+    }
+
+    return (number_of_matches as f32)/16.0
+}
+
+
 fn main() -> Result<()>{
     /*
     let start = Instant::now();
@@ -158,7 +175,7 @@ fn main() -> Result<()>{
             corr_matrix[u][v] = corr(u as u8,v as u8);
         } 
     }
-    print_matrix(corr_matrix);*/
+    print_matrix(corr_matrix);
     let mut samples: HashMap<u32,u32> = HashMap::new();
     let file = File::open("C:\\Users\\Honzaik\\spn\\src\\data.csv").unwrap();
     for line in BufReader::new(file).lines() {
@@ -169,7 +186,7 @@ fn main() -> Result<()>{
         let output = u32::from_str_radix(vec[1], 16).unwrap();
         samples.insert(input,output);
     }
-/*
+
     for k1 in 0..16 {
         for k2 in 0..16 {
             let testKey: u32 = (k2 as u32)*16 + (k1 as u32)*16*16*16;
@@ -177,13 +194,25 @@ fn main() -> Result<()>{
             println!("{}", korelace.abs());
         }
     }
-*/
+
 
     for k1 in 0..16 {
         let testKey: u32 = (k1 as u32)*16*16;
         let korelace: f32 = get_key_corr(testKey, &samples);
         println!("{}, {:#x}", korelace.abs(), testKey);
     }
+*/
+
+    let mut dpMatrix: [[f32; 16]; 16] = [[0.0; 16]; 16];
+    for u in 0..16{
+        for v in 0..16{
+            dpMatrix[u][v] = getDp(u as u8,v as u8);
+        } 
+    }
+
+    print_matrix(dpMatrix);
+
+
     Ok(())
 }
 
